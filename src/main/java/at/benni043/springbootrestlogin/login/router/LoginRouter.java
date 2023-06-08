@@ -1,9 +1,15 @@
 package at.benni043.springbootrestlogin.login.router;
 
 import at.benni043.springbootrestlogin.login.model.user.User;
-import at.benni043.springbootrestlogin.login.model.user.UserRequest;
+import at.benni043.springbootrestlogin.login.model.user.UserLoginRequest;
+import at.benni043.springbootrestlogin.login.model.user.UserRegisterRequest;
+import at.benni043.springbootrestlogin.login.model.user.UserResponse;
 import at.benni043.springbootrestlogin.login.service.LoginService;
+import at.benni043.springbootrestlogin.login.util.JwtUtil;
+import at.benni043.springbootrestlogin.login.util.HttpError;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,8 +24,10 @@ public class LoginRouter {
         this.loginService = loginService;
     }
 
-    @GetMapping("/get_user")
-    public User getUser(@RequestParam int id) {
+    @GetMapping("/user/{id}")
+    public User getUser(@PathVariable int id, @RequestParam String token) {
+        if (loginService.isUserTokenValid(id, token)) return null;
+
         try {
             return loginService.getUser(id);
         } catch (IllegalArgumentException illegalArgumentException) {
@@ -27,14 +35,57 @@ public class LoginRouter {
         }
     }
 
-    @GetMapping("/get_all_users")
-    public List<User> getAllUsers() {
+    @GetMapping("/user")
+    public List<User> getAllUsers(@RequestParam String token) {
+        if (!JwtUtil.validateToken(token)) return null;
+
         return loginService.getAllUsers();
     }
 
-    @PostMapping("/post_user")
-    public void postUser(@RequestBody UserRequest userRequest) {
-        loginService.setUser(userRequest);
+    @PostMapping("/user/register")
+    public ResponseEntity<UserResponse> registerUser(@RequestBody UserRegisterRequest userRegisterRequest) {
+        try {
+            return ResponseEntity.ok(loginService.setUser(userRegisterRequest));
+        } catch (IllegalArgumentException illegalArgumentException) {
+            if (illegalArgumentException.getMessage().equals(String.valueOf(HttpError.EMAIL_ALREADY_TAKEN))) {
+                return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(null);
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            }
+        }
+    }
+
+    @PostMapping("/user/login")
+    public ResponseEntity<UserResponse> loginUser(@RequestBody UserLoginRequest userLoginRequest) {
+        try {
+            return ResponseEntity.ok(loginService.getUserByEmail(userLoginRequest));
+        } catch (IllegalArgumentException illegalArgumentException) {
+            if (illegalArgumentException.getMessage().equals(String.valueOf(HttpError.USER_NOT_EXISTS))) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            } else if (illegalArgumentException.getMessage().equals(String.valueOf(HttpError.WRONG_PASSWORD))) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            }
+        }
+    }
+
+    @DeleteMapping("/user/{deleteId}")
+    public ResponseEntity<Integer> deleteUser(@PathVariable int deleteId, @RequestParam int ownId, @RequestParam String token) {
+        if (loginService.isUserTokenValid(ownId, token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        try {
+            int deletedUserId = loginService.deleteUser(deleteId);
+            return ResponseEntity.ok(deletedUserId);
+        } catch (IllegalArgumentException illegalArgumentException) {
+            if (illegalArgumentException.getMessage().equals(String.valueOf(HttpError.USER_NOT_EXISTS))) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        }
     }
 
 }
