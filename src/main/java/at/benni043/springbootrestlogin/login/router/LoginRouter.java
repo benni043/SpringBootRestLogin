@@ -1,6 +1,9 @@
 package at.benni043.springbootrestlogin.login.router;
 
-import at.benni043.springbootrestlogin.login.model.user.*;
+import at.benni043.springbootrestlogin.login.model.user.DisplayUser;
+import at.benni043.springbootrestlogin.login.model.user.UserLoginRequest;
+import at.benni043.springbootrestlogin.login.model.user.UserRegisterRequest;
+import at.benni043.springbootrestlogin.login.model.user.UserResponse;
 import at.benni043.springbootrestlogin.login.service.LoginService;
 import at.benni043.springbootrestlogin.login.util.HttpError;
 import at.benni043.springbootrestlogin.login.util.JwtUtil;
@@ -23,29 +26,33 @@ public class LoginRouter {
     }
 
     @GetMapping("/user/{id}")
-    public DisplayUser getUser(@PathVariable int id, HttpServletRequest request) {
+    public ResponseEntity<DisplayUser> getUser(@PathVariable int id, HttpServletRequest request) {
         String token = request.getHeader("Authorization").replace("Bearer ", "");
 
         if (loginService.isUserTokenValid(id, token)) {
-            return null;
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
         }
 
         try {
-            return loginService.getDisplayUser(id);
+            return ResponseEntity.ok(loginService.getDisplayUser(id));
         } catch (IllegalArgumentException illegalArgumentException) {
-            return null;
+            if (illegalArgumentException.getMessage().equals(String.valueOf(HttpError.USER_NOT_EXISTS))) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            }
         }
     }
 
     @GetMapping("/user")
-    public List<DisplayUser> getAllUsers(HttpServletRequest request) {
+    public ResponseEntity<List<DisplayUser>> getAllUsers(HttpServletRequest request) {
         String token = request.getHeader("Authorization").replace("Bearer ", "");
 
         if (!JwtUtil.validateToken(token)) {
-            return null;
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
         }
 
-        return loginService.getAllDisplayUsers();
+        return ResponseEntity.ok(loginService.getAllDisplayUsers());
     }
 
     @PostMapping("/user/register")
@@ -81,7 +88,7 @@ public class LoginRouter {
         String token = request.getHeader("Authorization").replace("Bearer ", "");
 
         if (loginService.isUserTokenValid(ownId, token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         try {
