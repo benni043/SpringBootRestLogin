@@ -29,11 +29,11 @@ public class LoginService {
 
     public DisplayUser getDisplayUser(int id) {
         User user = loginStore.getUser(id);
-        return new DisplayUser(user.getEmail(), user.getUserName());
+        return new DisplayUser(user.getEmail(), user.getUserName(), user.getId());
     }
 
     public List<DisplayUser> getAllDisplayUsers() {
-        return loginStore.getAllUsers().stream().map(user -> new DisplayUser(user.getEmail(), user.getUserName())).collect(Collectors.toList());
+        return loginStore.getAllUsers().stream().map(user -> new DisplayUser(user.getEmail(), user.getUserName(), user.getId())).collect(Collectors.toList());
     }
 
     public UserResponse setUser(UserRegisterRequest userRegisterRequest) {
