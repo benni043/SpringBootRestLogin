@@ -1,15 +1,13 @@
 package at.benni043.springbootrestlogin.login.service;
 
-import at.benni043.springbootrestlogin.login.model.user.User;
-import at.benni043.springbootrestlogin.login.model.user.UserLoginRequest;
-import at.benni043.springbootrestlogin.login.model.user.UserRegisterRequest;
-import at.benni043.springbootrestlogin.login.model.user.UserResponse;
+import at.benni043.springbootrestlogin.login.model.user.*;
 import at.benni043.springbootrestlogin.login.store.LoginStore;
 import at.benni043.springbootrestlogin.login.util.HttpError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class LoginService {
@@ -27,6 +25,15 @@ public class LoginService {
 
     public List<User> getAllUsers() {
         return loginStore.getAllUsers();
+    }
+
+    public DisplayUser getDisplayUser(int id) {
+        User user = loginStore.getUser(id);
+        return new DisplayUser(user.getEmail(), user.getUserName());
+    }
+
+    public List<DisplayUser> getAllDisplayUsers() {
+        return loginStore.getAllUsers().stream().map(user -> new DisplayUser(user.getEmail(), user.getUserName())).collect(Collectors.toList());
     }
 
     public UserResponse setUser(UserRegisterRequest userRegisterRequest) {

@@ -1,9 +1,6 @@
 package at.benni043.springbootrestlogin.login.router;
 
-import at.benni043.springbootrestlogin.login.model.user.User;
-import at.benni043.springbootrestlogin.login.model.user.UserLoginRequest;
-import at.benni043.springbootrestlogin.login.model.user.UserRegisterRequest;
-import at.benni043.springbootrestlogin.login.model.user.UserResponse;
+import at.benni043.springbootrestlogin.login.model.user.*;
 import at.benni043.springbootrestlogin.login.service.LoginService;
 import at.benni043.springbootrestlogin.login.util.HttpError;
 import at.benni043.springbootrestlogin.login.util.JwtUtil;
@@ -26,7 +23,7 @@ public class LoginRouter {
     }
 
     @GetMapping("/user/{id}")
-    public User getUser(@PathVariable int id, HttpServletRequest request) {
+    public DisplayUser getUser(@PathVariable int id, HttpServletRequest request) {
         String token = request.getHeader("Authorization").replace("Bearer ", "");
 
         if (loginService.isUserTokenValid(id, token)) {
@@ -34,21 +31,21 @@ public class LoginRouter {
         }
 
         try {
-            return loginService.getUser(id);
+            return loginService.getDisplayUser(id);
         } catch (IllegalArgumentException illegalArgumentException) {
             return null;
         }
     }
 
     @GetMapping("/user")
-    public List<User> getAllUsers(HttpServletRequest request) {
+    public List<DisplayUser> getAllUsers(HttpServletRequest request) {
         String token = request.getHeader("Authorization").replace("Bearer ", "");
 
         if (!JwtUtil.validateToken(token)) {
             return null;
         }
 
-        return loginService.getAllUsers();
+        return loginService.getAllDisplayUsers();
     }
 
     @PostMapping("/user/register")
