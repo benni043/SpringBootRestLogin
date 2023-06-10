@@ -14,7 +14,7 @@ import java.util.List;
 @Service
 public class LoginService {
 
-    private LoginStore loginStore;
+    private final LoginStore loginStore;
 
     @Autowired
     public LoginService(LoginStore loginStore) {
@@ -42,9 +42,9 @@ public class LoginService {
     public boolean isUserTokenValid(int id, String token) {
         try {
             User user = getUser(id);
-            return !user.getJwtToken().equals(token);
+            return user.getJwtToken().equals(token);
         } catch (IllegalArgumentException illegalArgumentException) {
-            return true;
+            return false;
         }
     }
 

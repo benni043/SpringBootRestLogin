@@ -14,16 +14,11 @@ import java.util.Optional;
 @Repository
 public class LoginStore {
 
-    private List<User> userList;
+    private final List<User> userList;
     private static int id = 0;
 
     public LoginStore() {
         this.userList = new ArrayList<>();
-
-//        User user1 = new User(0, JwtUtil.generateToken("benni043"), "benni@mail.com", "benni043", "test");
-//        User user2 = new User(1, JwtUtil.generateToken("tobinio"), "tobinio@mail.com", "tobinio", "hugo");
-//
-//        userList.addAll(Arrays.asList(user1, user2));
     }
 
     public User getUser(int id) {
@@ -61,11 +56,9 @@ public class LoginStore {
         Optional<User> user = userList.stream().filter(u -> u.getId() == id).findFirst();
 
         if (user.isPresent()) {
-            System.out.println(user.get().getId());
             userList.remove(user.get());
             return id;
         } else {
-            System.out.println(id);
             throw new IllegalArgumentException(String.valueOf(HttpError.USER_NOT_EXISTS));
         }
     }

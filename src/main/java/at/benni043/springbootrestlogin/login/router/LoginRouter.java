@@ -5,8 +5,9 @@ import at.benni043.springbootrestlogin.login.model.user.UserLoginRequest;
 import at.benni043.springbootrestlogin.login.model.user.UserRegisterRequest;
 import at.benni043.springbootrestlogin.login.model.user.UserResponse;
 import at.benni043.springbootrestlogin.login.service.LoginService;
-import at.benni043.springbootrestlogin.login.util.JwtUtil;
 import at.benni043.springbootrestlogin.login.util.HttpError;
+import at.benni043.springbootrestlogin.login.util.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +18,7 @@ import java.util.List;
 @RestController
 public class LoginRouter {
 
-    private LoginService loginService;
+    private final LoginService loginService;
 
     @Autowired
     public LoginRouter(LoginService loginService) {
@@ -25,8 +26,12 @@ public class LoginRouter {
     }
 
     @GetMapping("/user/{id}")
-    public User getUser(@PathVariable int id, @RequestParam String token) {
-        if (loginService.isUserTokenValid(id, token)) return null;
+    public User getUser(@PathVariable int id, HttpServletRequest request) {
+        String token = request.getHeader("Authorization").replace("Bearer ", "");
+
+        if (loginService.isUserTokenValid(id, token)) {
+            return null;
+        }
 
         try {
             return loginService.getUser(id);
@@ -36,8 +41,12 @@ public class LoginRouter {
     }
 
     @GetMapping("/user")
-    public List<User> getAllUsers(@RequestParam String token) {
-        if (!JwtUtil.validateToken(token)) return null;
+    public List<User> getAllUsers(HttpServletRequest request) {
+        String token = request.getHeader("Authorization").replace("Bearer ", "");
+
+        if (!JwtUtil.validateToken(token)) {
+            return null;
+        }
 
         return loginService.getAllUsers();
     }
@@ -71,7 +80,9 @@ public class LoginRouter {
     }
 
     @DeleteMapping("/user/{deleteId}")
-    public ResponseEntity<Integer> deleteUser(@PathVariable int deleteId, @RequestParam int ownId, @RequestParam String token) {
+    public ResponseEntity<Integer> deleteUser(@PathVariable int deleteId, @RequestParam int ownId, HttpServletRequest request) {
+        String token = request.getHeader("Authorization").replace("Bearer ", "");
+
         if (loginService.isUserTokenValid(ownId, token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
